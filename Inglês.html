@@ -1,0 +1,851 @@
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Questões</title>
+        <style>
+            :root {
+                --bg: #f8f9fa;
+                --card: #ffffff;
+                --text: #2c3e50;
+                --muted: #7f8c8d;
+                --border: #e1e8ed;
+                --primary: #3498db;
+                --secondary: #2c3e50;
+                --accent: #e74c3c;
+                --shadow: rgba(0, 0, 0, 0.08);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html, body {
+                height: 100%;
+                margin: 0;
+                font-family: 'Segoe UI', system-ui, sans-serif;
+                background: var(--bg);
+                color: var(--text);
+                line-height: 1.5;
+                overflow: hidden;
+            }
+
+            .app-container {
+                display: flex;
+                height: 100vh;
+                width: 100%;
+            }
+
+            /* Coluna da esquerda - Navegação */
+            .nav-column {
+                width: 220px;
+                background: var(--secondary);
+                color: white;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+                z-index: 10;
+            }
+
+            .nav-header {
+                padding: 20px 15px;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+
+            .nav-header h2 {
+                margin: 0;
+                font-size: 18px;
+                font-weight: 600;
+                text-align: center;
+            }
+
+            .question-nav {
+                flex: 1;
+                overflow-y: auto;
+                padding: 15px;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                align-content: start;
+            }
+
+            /* Esconder a barra de rolagem mas manter funcionalidade */
+            .question-nav::-webkit-scrollbar {
+                width: 0;
+                background: transparent;
+            }
+
+            .nav-btn {
+                background: rgba(255,255,255,0.1);
+                border: none;
+                color: white;
+                width: 50px;
+                height: 50px;
+                border-radius: 8px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .nav-btn:hover {
+                background: rgba(255,255,255,0.2);
+                transform: translateY(-2px);
+            }
+
+            .nav-btn.active {
+                background: var(--primary);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+
+            /* Coluna da direita - Questões */
+            .questions-column {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                background: white;
+            }
+
+            .questions-header {
+                padding: 20px;
+                border-bottom: 1px solid var(--border);
+                background: white;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+            }
+
+            .questions-header h1 {
+                margin: 0;
+                font-size: 24px;
+                font-weight: 700;
+                color: var(--primary);
+                text-align: center;
+            }
+
+            .questions-container {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px;
+            }
+
+            /* Esconder a barra de rolagem mas manter funcionalidade */
+            .questions-container::-webkit-scrollbar {
+                width: 0;
+                background: transparent;
+            }
+
+            .grid {
+                display: grid;
+                gap: 25px;
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+
+            .card {
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 25px;
+                display: flex;
+                flex-direction: column;
+                gap: 18px;
+                box-shadow: 0 3px 10px var(--shadow);
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                scroll-margin-top: 20px;
+            }
+
+            .card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px var(--shadow);
+            }
+
+            .qnum {
+                font-size: 14px;
+                color: var(--muted);
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .question {
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--text);
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+
+            .answer {
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 18px;
+                min-height: 40px;
+                font-size: 16px;
+                background: #f8fdff;
+                transition: all 0.3s ease;
+                white-space: pre-line;
+                line-height: 1.6;
+            }
+
+            .blurred {
+                filter: blur(6px);
+                cursor: pointer;
+                user-select: none;
+                background: #f0f8ff;
+            }
+
+            .revealed {
+                filter: none !important;
+                cursor: default;
+                background: white;
+            }
+
+            .answer ul, .answer ol {
+                margin: 8px 0;
+                padding-left: 24px;
+            }
+
+            .answer li {
+                margin-bottom: 6px;
+            }
+
+            textarea {
+                width: 100%;
+                min-height: 120px;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 14px;
+                font-family: inherit;
+                font-size: 15px;
+                resize: vertical;
+                background: white;
+                transition: border-color 0.2s ease;
+            }
+
+            textarea:focus {
+                outline: none;
+                border-color: var(--primary);
+                box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            }
+
+            .hint {
+                font-size: 13px;
+                color: var(--muted);
+                margin-top: -8px;
+                text-align: center;
+            }
+
+            /* Responsividade */
+            .mobile-menu-btn {
+                display: none;
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                background: var(--primary);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+                cursor: pointer;
+                z-index: 100;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+
+            @media (max-width: 992px) {
+                .app-container {
+                    flex-direction: column;
+                }
+                
+                .nav-column {
+                    width: 100%;
+                    height: auto;
+                    max-height: 200px;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    z-index: 99;
+                    transform: translateY(-100%);
+                    transition: transform 0.3s ease;
+                }
+                
+                .nav-column.open {
+                    transform: translateY(0);
+                }
+                
+                .questions-column {
+                    margin-top: 0;
+                    height: 100vh;
+                }
+                
+                .mobile-menu-btn {
+                    display: block;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .question-nav {
+                    grid-template-columns: repeat(5, 1fr);
+                }
+                
+                .nav-btn {
+                    width: 45px;
+                    height: 45px;
+                }
+                
+                .card {
+                    padding: 18px;
+                }
+                
+                .question {
+                    font-size: 16px;
+                }
+                
+                .answer {
+                    font-size: 15px;
+                    padding: 14px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+        
+        <div class="app-container">
+            <!-- Coluna da esquerda - Navegação -->
+            <div class="nav-column" id="navColumn">
+                <div class="nav-header">
+                    <h2>Navegação</h2>
+                </div>
+                <div class="question-nav" id="questionNav">
+                    <!-- Os botões serão gerados via JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Coluna da direita - Questões -->
+            <div class="questions-column">
+                <div class="questions-header">
+                    <h1></h1>
+                </div>
+                <div class="questions-container">
+                    <div class="grid" id="cards"></div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+           const questoes = [
+    {
+        q: "O que significa, em sequência, as palavras but, however, although, though, even though, whereas, on the other hand, nevertheless, yet?",
+        a: `
+but = mas  
+Ex.: I wanted to go, but it was too late. (Eu queria ir, mas era tarde demais.)
+
+however = porém / no entanto  
+Ex.: She studied a lot; however, she didn’t pass. (Ela estudou muito; no entanto, não passou.)
+
+although = embora  
+Ex.: Although it was raining, we went out. (Embora estivesse chovendo, nós saímos.)
+
+though = embora / apesar de  
+Ex.: He is shy, though he is very friendly. (Ele é tímido, embora seja muito amigável.)
+
+even though = mesmo que / apesar de  
+Ex.: Even though he was tired, he kept working. (Mesmo cansado, ele continuou trabalhando.)
+
+whereas = enquanto que / ao passo que  
+Ex.: She likes coffee, whereas he prefers tea. (Ela gosta de café, ao passo que ele prefere chá.)
+
+on the other hand = por outro lado  
+Ex.: The city is crowded; on the other hand, it is exciting. (A cidade é lotada; por outro lado, é empolgante.)
+
+nevertheless = ainda assim / mesmo assim  
+Ex.: It was cold; nevertheless, they went swimming. (Estava frio; ainda assim, eles foram nadar.)
+
+yet = porém / contudo  
+Ex.: She is young, yet very mature. (Ela é jovem, porém muito madura.)
+        `,
+    },
+
+    // — ADIÇÃO —
+    {
+        q: "Quais advérbios e expressões podem ser usados para indicar ADIÇÃO em inglês (ex.: besides, moreover, furthermore)?",
+        a: `
+besides = além disso  
+Ex.: Besides being smart, she is very kind. (Além de ser inteligente, ela é muito gentil.)
+
+moreover = além disso / além do mais  
+Ex.: The solution is expensive; moreover, it is inefficient. (A solução é cara; além do mais, é ineficiente.)
+
+furthermore = além disso  
+Ex.: The report is incomplete; furthermore, it contains errors. (O relatório está incompleto; além disso, contém erros.)
+
+in addition = além disso / em adição  
+Ex.: In addition, we need more time to finish. (Além disso, precisamos de mais tempo para terminar.)
+
+also = também  
+Ex.: She speaks English and also French. (Ela fala inglês e também francês.)
+
+as well = também  
+Ex.: He bought a jacket and gloves as well. (Ele comprou um casaco e também luvas.)
+        `,
+    },
+
+    // — CONSEQUÊNCIA —
+    {
+        q: "Quais advérbios podem indicar CONSEQUÊNCIA em inglês (ex.: therefore, thus, hence, as a result)?",
+        a: `
+therefore = portanto  
+Ex.: She didn’t study; therefore, she failed. (Ela não estudou; portanto, ela falhou.)
+
+thus = assim / portanto  
+Ex.: The roads were icy, thus causing delays. (As estradas estavam congeladas, assim causando atrasos.)
+
+hence = por isso / daí  
+Ex.: He was the only candidate; hence the result. (Ele foi o único candidato; daí o resultado.)
+
+as a result = como resultado  
+Ex.: It rained all week; as a result, the trip was canceled. (Choveu a semana inteira; como resultado, a viagem foi cancelada.)
+        `,
+    },
+
+    // — CONTRASTE (EXTRA) —
+    {
+        q: "Quais advérbios e expressões podem indicar CONTRASTE em inglês além dos já vistos (ex.: even so, on the contrary, instead)?",
+        a: `
+even so = mesmo assim  
+Ex.: It was late; even so, they kept talking. (Já era tarde; mesmo assim, eles continuaram conversando.)
+
+on the contrary = pelo contrário  
+Ex.: He wasn't angry; on the contrary, he was happy. (Ele não estava bravo; pelo contrário, estava feliz.)
+
+instead = em vez disso  
+Ex.: I didn't take the bus; instead, I walked. (Eu não peguei o ônibus; em vez disso, caminhei.)
+
+otherwise = caso contrário  
+Ex.: Study hard; otherwise, you won’t pass. (Estude bastante; caso contrário, você não vai passar.)
+        `,
+    },
+
+    // — EXEMPLIFICAÇÃO —
+    {
+        q: "Quais advérbios e expressões podem indicar EXEMPLIFICAÇÃO em inglês (ex.: for example, for instance, such as)?",
+        a: `
+for example = por exemplo  
+Ex.: Many fruits, for example apples, are rich in fiber. (Muitas frutas, por exemplo maçãs, são ricas em fibras.)
+
+for instance = por exemplo  
+Ex.: She loves outdoor activities, for instance hiking. (Ela ama atividades ao ar livre, por exemplo trilhas.)
+
+such as = tais como  
+Ex.: He enjoys games such as chess and poker. (Ele gosta de jogos tais como xadrez e pôquer.)
+
+like = como / por exemplo  
+Ex.: I prefer warm drinks like tea. (Eu prefiro bebidas quentes como chá.)
+        `,
+    },
+
+    // — MODALIZADORES —
+    {
+        q: "Quais advérbios/expressões funcionam como modalizadores em inglês (ex.: maybe, probably, certainly), evitando usar a expressão 'é para indicar'?",
+        a: `
+maybe = talvez  
+Ex.: Maybe we can meet tomorrow. (Talvez possamos nos encontrar amanhã.)
+
+probably = provavelmente  
+Ex.: She will probably arrive late. (Ela provavelmente chegará atrasada.)
+
+certainly = certamente  
+Ex.: He will certainly approve the proposal. (Ele certamente aprovará a proposta.)
+
+apparently = ao que tudo indica  
+Ex.: Apparently, the plan worked. (Ao que tudo indica, o plano deu certo.)
+
+possibly = possivelmente  
+Ex.: They may possibly change the date. (Eles possivelmente vão mudar a data.)
+
+clearly = claramente  
+Ex.: Clearly, he needs more time. (Claramente, ele precisa de mais tempo.)
+
+undoubtedly = sem dúvida  
+Ex.: She is undoubtedly the best candidate. (Ela é, sem dúvida, a melhor candidata.)
+        `,
+    },
+
+    // — ORGANIZAÇÃO DO DISCURSO —
+    {
+        q: "Quais expressões servem para organizar o discurso em inglês (ex.: firstly, meanwhile, eventually)?",
+        a: `
+firstly = primeiramente  
+Ex.: Firstly, we need to review the data. (Primeiramente, precisamos revisar os dados.)
+
+meanwhile = enquanto isso  
+Ex.: She cooked dinner; meanwhile, he set the table. (Ela preparou o jantar; enquanto isso, ele arrumou a mesa.)
+
+eventually = finalmente / no fim  
+Ex.: They worked hard and eventually finished the project. (Eles trabalharam duro e finalmente terminaram o projeto.)
+
+ultimately = em última análise / finalmente  
+Ex.: Ultimately, they chose the safest option. (Em última análise, eles escolheram a opção mais segura.)
+
+finally = finalmente  
+Ex.: Finally, the results were published. (Finalmente, os resultados foram publicados.)
+        `,
+    },
+
+    // — CONTRASTE (COM SURPRESA/CONTRADIÇÃO) —
+    {
+        q: "Quais conectores podem indicar CONTRASTE com ideia de SURPRESA ou CONTRADIÇÃO IMPLÍCITA (ex.: in spite of, despite)?",
+        a: `
+in spite of = apesar de  
+Ex.: In spite of the rain, they played outside. (Apesar da chuva, eles brincaram lá fora.)
+
+despite = apesar de  
+Ex.: Despite his age, he runs fast. (Apesar da idade, ele corre rápido.)
+
+despite the fact that = apesar do fato de que  
+Ex.: Despite the fact that she was tired, she kept studying. (Apesar de estar cansada, continuou estudando.)
+
+even so = mesmo assim  
+Ex.: The test was difficult; even so, she passed. (A prova foi difícil; mesmo assim, ela passou.)
+        `,
+    },
+
+    // — ADIÇÃO (ACADÊMICO) —
+    {
+        q: "Quais conectores podem funcionar como 'palavras-âncora' para ADIÇÃO em textos acadêmicos (ex.: besides, additionally, what’s more)?",
+        a: `
+additionally = além disso  
+Ex.: The study is recent; additionally, it is reliable. (O estudo é recente; além disso, é confiável.)
+
+what’s more = além disso / e mais  
+Ex.: The phone is fast; what's more, it's cheap. (O celular é rápido; além disso, é barato.)
+
+not only... but also = não apenas... mas também  
+Ex.: She is not only smart but also creative. (Ela não é apenas inteligente, mas também criativa.)
+        `,
+    },
+
+    // — FINALIDADE —
+    {
+        q: "Quais conectores podem introduzir FINALIDADE em inglês (ex.: so that, in order to, so as to)?",
+        a: `
+so that = para que  
+Ex.: I woke up early so that I wouldn’t miss the bus. (Acordei cedo para não perder o ônibus.)
+
+in order to = para / com o propósito de  
+Ex.: She studied in order to get good grades. (Ela estudou para tirar boas notas.)
+
+so as to = a fim de / para  
+Ex.: He whispered so as to not wake the baby. (Ele sussurrou para não acordar o bebê.)
+        `,
+    },
+
+    // — OPINIÃO —
+    {
+        q: "Quais expressões podem introduzir OPINIÃO e PONTO DE VISTA em inglês (ex.: in my opinion, as far as I’m concerned, I believe)?",
+        a: `
+in my opinion = na minha opinião  
+Ex.: In my opinion, exams should be shorter. (Na minha opinião, as provas deveriam ser mais curtas.)
+
+as far as I’m concerned = no que me diz respeito  
+Ex.: As far as I’m concerned, the plan is perfect. (No que me diz respeito, o plano está perfeito.)
+
+I believe / I think / I suppose = eu acredito / eu acho / eu suponho  
+Ex.: I believe this solution will work. (Eu acredito que essa solução irá funcionar.)
+        `,
+    },
+
+    // — EXPLICAÇÃO —
+    {
+        q: "Quais conectores podem introduzir EXPLICAÇÃO ou ESCLARECIMENTO (ex.: that is, in other words, namely)?",
+        a: `
+that is = isto é  
+Ex.: The device is portable, that is, you can carry it anywhere. (O aparelho é portátil, isto é, você pode carregá-lo.)
+
+in other words = em outras palavras  
+Ex.: He is a minor, in other words, he cannot vote. (Ele é menor, em outras palavras, não pode votar.)
+
+namely = a saber  
+Ex.: She has two pets, namely, a dog and a cat. (Ela tem dois animais, a saber: um cachorro e um gato.)
+        `,
+    },
+
+    // — ORDEM LÓGICA —
+    {
+        q: "Quais conectores podem organizar TEXTO ARGUMENTATIVO ao apresentar ideias em ordem lógica (ex.: to begin with, secondly, last but not least)?",
+        a: `
+to begin with = para começar  
+Ex.: To begin with, the problem affects everyone. (Para começar, o problema afeta todos.)
+
+secondly = em segundo lugar  
+Ex.: Secondly, there are financial consequences. (Em segundo lugar, há consequências financeiras.)
+
+last but not least = por último, mas não menos importante  
+Ex.: Last but not least, we need new laws. (Por último, mas não menos importante, precisamos de novas leis.)
+        `,
+    },
+
+    // — RESULTADO (FORMAL) —
+    {
+        q: "Quais conectores introduzem RESULTADO com maior formalidade (ex.: consequently, accordingly)?",
+        a: `
+consequently = consequentemente  
+Ex.: Prices increased; consequently, demand dropped. (Os preços aumentaram; consequentemente, a demanda caiu.)
+
+accordingly = por conseguinte  
+Ex.: The evidence was weak; accordingly, the case was dismissed. (As provas eram fracas; por conseguinte, o caso foi encerrado.)
+
+thus = portanto / assim  
+Ex.: He was the best candidate; thus, he was hired. (Ele era o melhor candidato; assim, foi contratado.)
+        `,
+    },
+
+    // — BC (although / even though / though)
+    {
+        q: "Qual a diferença de uso entre although / though / even though segundo o British Council?",
+        a: `
+although / though = usados para introduzir contraste em frases completas (com sujeito + verbo)  
+Ex.: Although she was tired, she continued working. (Embora estivesse cansada, continuou trabalhando.)
+
+even though = forma mais enfática, destaca contraste forte  
+Ex.: Even though it was expensive, he bought it. (Mesmo sendo caro, ele comprou.)
+
+Obs.: though pode aparecer no final da frase  
+Ex.: I didn’t like the film. The soundtrack was good, though. (Eu não gostei do filme. A trilha sonora era boa, porém.)
+        `,
+    },
+
+    // — BC (despite / in spite of)
+    {
+        q: "Quando usar in spite of e despite, conforme o site?",
+        a: `
+Ambos significam "apesar de" e são seguidos por:
+- substantivo
+- pronome
+- verbo no gerúndio (-ing)
+
+Ex.: Despite his age, he runs fast. (Apesar da idade, ele corre rápido.)
+Ex.: In spite of being tired, she kept studying. (Apesar de estar cansada, ela continuou estudando.)
+
+⚠️ Nunca seguidos por sujeito + verbo.
+❌ Despite he was tired...
+✔️ Despite the fact that he was tired...
+        `,
+    },
+
+    // — BC (despite + fact)
+    {
+        q: "Como usar despite / in spite of com uma oração completa segundo o British Council?",
+        a: `
+Para ligar à oração (sujeito + verbo), usa-se:
+despite the fact that / in spite of the fact that
+
+Ex.: Despite the fact that it was raining, they went out. (Apesar do fato de que estava chovendo, eles saíram.)
+
+Ex.: In spite of the fact that she was sick, she worked. (Apesar do fato de que estava doente, ela trabalhou.)
+        `,
+    },
+
+    // — BC (however / nevertheless)
+    {
+        q: "Como usar however e nevertheless conforme o site do British Council?",
+        a: `
+however / nevertheless = conectores que iniciam nova frase ou cláusula, seguidos por vírgula.
+
+Ex.: It was raining; however, we went out. (Estava chovendo; no entanto, saímos.)
+
+Ex.: The task was difficult; nevertheless, we finished it. (A tarefa era difícil; mesmo assim, terminamos.)
+        `,
+    },
+
+    // — BC (while / whereas)
+    {
+        q: "Como contrasting ideas podem usar while e whereas segundo o British Council?",
+        a: `
+while / whereas = contrastes entre duas ideias em uma mesma frase.
+
+Ex.: She enjoys jazz, whereas he prefers rock. (Ela gosta de jazz, enquanto ele prefere rock.)
+
+Ex.: While I love the city, my brother hates it. (Enquanto eu amo a cidade, meu irmão a odeia.)
+
+⚠️ Sem vírgula antes de while no início da frase.
+✔️ While I agree, we should be careful.
+        `,
+    },
+
+    // — BC (although vs however punctuation)
+    {
+        q: "Qual diferença de pontuação entre although e however segundo o British Council?",
+        a: `
+although = não separa duas frases independentes; conecta duas ideias na mesma frase.
+
+✔️ Although it was cold, we went swimming.
+
+however = pode iniciar uma nova frase e exige vírgula.
+
+✔️ It was cold. However, we went swimming.
+✔️ It was cold; however, we went swimming.
+        `,
+    }
+];
+
+
+
+
+            // Elementos DOM
+            const container = document.getElementById("cards");
+            const questionNav = document.getElementById("questionNav");
+            const navColumn = document.getElementById("navColumn");
+            const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+
+            // Criar botões de navegação
+            function createNavButtons() {
+                questionNav.innerHTML = '';
+                questoes.forEach((_, index) => {
+                    const button = document.createElement('button');
+                    button.className = 'nav-btn';
+                    button.textContent = index + 1;
+                    button.setAttribute('data-question', index);
+                    
+                    button.addEventListener('click', () => {
+                        scrollToQuestion(index);
+                        updateActiveButton(index);
+                    });
+                    
+                    questionNav.appendChild(button);
+                });
+            }
+
+            // Rolar até a questão específica
+            function scrollToQuestion(index) {
+                const questionCards = document.querySelectorAll('.card');
+                if (questionCards[index]) {
+                    const container = document.querySelector('.questions-container');
+                    const card = questionCards[index];
+                    
+                    container.scrollTo({
+                        top: card.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                    
+                    // Fechar menu móvel após clicar em uma questão
+                    if (window.innerWidth <= 992) {
+                        navColumn.classList.remove('open');
+                    }
+                }
+            }
+
+            // Atualizar botão ativo
+            function updateActiveButton(index) {
+                const buttons = document.querySelectorAll('.nav-btn');
+                buttons.forEach(btn => btn.classList.remove('active'));
+                buttons[index].classList.add('active');
+            }
+
+            // Detectar qual questão está visível
+            function handleScroll() {
+                const questionCards = document.querySelectorAll('.card');
+                const container = document.querySelector('.questions-container');
+                const scrollPosition = container.scrollTop + 100;
+                
+                for (let i = questionCards.length - 1; i >= 0; i--) {
+                    if (scrollPosition >= questionCards[i].offsetTop) {
+                        updateActiveButton(i);
+                        break;
+                    }
+                }
+            }
+
+            // Construir cartão de questão
+            function buildCard(item, index) {
+                const card = document.createElement("section");
+                card.className = "card";
+                card.id = `question-${index + 1}`;
+
+                const qnum = document.createElement("div");
+                qnum.className = "qnum";
+                qnum.textContent = `Questão ${index + 1}`;
+
+                const question = document.createElement("div");
+                question.className = "question";
+                question.textContent = item.q;
+
+                const answer = document.createElement("div");
+                answer.className = "answer blurred";
+                answer.innerHTML = formatAnswer(item.a);
+
+                answer.addEventListener("click", () => {
+                    answer.classList.toggle("revealed");
+                    answer.classList.toggle("blurred");
+                });
+
+                const hint = document.createElement("div");
+                hint.className = "hint";
+                hint.textContent = "Clique na resposta para revelar/ocultar";
+
+                const textarea = document.createElement("textarea");
+                textarea.placeholder = "Escreva sua resposta aqui...";
+                textarea.name = `resp_${index + 1}`;
+
+                card.appendChild(qnum);
+                card.appendChild(question);
+                card.appendChild(answer);
+                card.appendChild(hint);
+                card.appendChild(textarea);
+
+                return card;
+            }
+
+            // Formatar respostas com listas numeradas
+            function formatAnswer(text) {
+                return text
+                    .replace(/\n/g, '<br>')
+                    .replace(/(\d+\)) /g, '<br>$1 ')
+                    .replace(/(\d+\.) /g, '<br>$1 ');
+            }
+
+            // Renderizar todas as questões
+            function renderAll() {
+                container.innerHTML = "";
+                questoes.forEach((q, index) => container.appendChild(buildCard(q, index)));
+            }
+
+            // Inicializar aplicação
+            function init() {
+                createNavButtons();
+                renderAll();
+                
+                // Adicionar evento de scroll
+                const questionsContainer = document.querySelector('.questions-container');
+                questionsContainer.addEventListener('scroll', handleScroll);
+                
+                // Botão do menu móvel
+                mobileMenuBtn.addEventListener('click', () => {
+                    navColumn.classList.toggle('open');
+                });
+                
+                // Fechar menu ao clicar fora (para dispositivos móveis)
+                document.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 992 && 
+                        !navColumn.contains(e.target) && 
+                        !mobileMenuBtn.contains(e.target)) {
+                        navColumn.classList.remove('open');
+                    }
+                });
+                
+                // Atualizar botão ativo inicial
+                updateActiveButton(0);
+            }
+
+            // Iniciar quando o DOM estiver carregado
+            document.addEventListener('DOMContentLoaded', init);
+        </script>
+    </body>
+</html>
